@@ -8,8 +8,7 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 import os
 
-# Configuração da página
-st.set_page_config(page_title="Desempenho de Vendas por Produto", layout="wide")
+
 
 # Configuração do cache (TTL de 180 segundos)
 cache = TTLCache(maxsize=1, ttl=180)
