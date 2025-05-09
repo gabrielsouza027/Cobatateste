@@ -29,10 +29,13 @@ SUPABASE_HEADERS = {
 
 # Função genérica para buscar dados do Supabase com cache e paginação
 @st.cache_data(show_spinner=False)
-def fetch_supabase_data(cache, url, columns_expected, data_inicial, data_final, date_column=None):
+def fetch_supabase_data(cache, url, columns_expected, data_inicial: str, data_final: str, date_column=None):
     key = f"{url}_{data_inicial}_{data_final}"
     if key in cache:
         return cache[key]
+
+    # Converter columns_expected para tupla para garantir hasheabilidade
+    columns_expected = tuple(columns_expected)
 
     all_data = []
     page_size = 700
@@ -84,7 +87,14 @@ def fetch_supabase_data(cache, url, columns_expected, data_inicial, data_final, 
 # Função para buscar dados de vendas (VwSomelier)
 def fetch_vendas_data(data_inicial, data_final):
     config = SUPABASE_CONFIG["vendas"]
-    df = fetch_supabase_data(cache_vendas, config["url"], config["columns"], data_inicial, data_final, date_column="DATA")
+    df = fetch_supabase_data(
+        cache_vendas,
+        config["url"],
+        config["columns"],
+        data_inicial.strftime("%Y-%m-%d"),
+        data_final.strftime("%Y-%m-%d"),
+        date_column="DATA"
+    )
     if not df.empty:
         # Converter QT para numérico
         df['QT'] = pd.to_numeric(df['QT'], errors='coerce').fillna(0)
@@ -93,7 +103,13 @@ def fetch_vendas_data(data_inicial, data_final):
 # Função para buscar dados de estoque (ESTOQUE)
 def fetch_estoque_data(data_inicial, data_final):
     config = SUPABASE_CONFIG["estoque"]
-    df = fetch_supabase_data(cache_estoque, config["url"], config["columns"], data_inicial, data_final)
+    df = fetch_supabase_data(
+        cache_estoque,
+        config["url"],
+        config["columns"],
+        data_inicial.strftime("%Y-%m-%d"),
+        data_final.strftime("%Y-%m-%d")
+    )
     if not df.empty:
         # Converter colunas numéricas relevantes
         for col in ['QT_ESTOQUE', 'QTULTENT', 'QTRESERV', 'QTINDENIZ', 'BLOQUEADA']:
