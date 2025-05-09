@@ -206,7 +206,14 @@ def main():
             border-radius: 10px;
             padding: 10px;
             font-size: 16px;
-            background-color: #f9f9f9;
+            background-color: #000000; /* Fundo preto */
+            color: #ffffff; /* Texto branco para contraste */
+        }
+        .stTextInput>div>div>input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            background-color: #000000; /* Mantém fundo preto ao focar */
+            color: #ffffff;
         }
     </style>
     """, unsafe_allow_html=True)
