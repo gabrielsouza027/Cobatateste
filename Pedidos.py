@@ -145,17 +145,19 @@ def main():
             border-collapse: collapse;
             margin: 20px 0;
             font-size: clamp(14px, 2vw, 16px);
+            background-color: #000000; /* Fundo preto */
+            color: #ffffff; /* Texto branco */
         }
         .ranking-table th, .ranking-table td {
             padding: 12px;
             text-align: center;
-            border: 1px solid #ddd;
+            border: 1px solid #444444; /* Borda cinza escura para visibilidade */
         }
         .ranking-table tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color: #1a1a1a; /* Cinza muito escuro para linhas pares */
         }
         .ranking-table tr:hover {
-            background-color: #ddd;
+            background-color: #333333; /* Cinza escuro ao passar o mouse */
         }
 
         /* Card styling */
