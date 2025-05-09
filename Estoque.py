@@ -21,7 +21,7 @@ SUPABASE_CONFIG = {
     }
 }
 
-# Cabeçalhos para autenticação no Supabase (recomenda-se usar variáveis de ambiente no Streamlit Cloud)
+# Cabeçalhos para autenticação no Supabase
 SUPABASE_HEADERS = {
     "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpvem9tbnBwd3B3Z3RxZGd0d255Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1NTYzMDYsImV4cCI6MjA2MjEzMjMwNn0.KcX5BOG-hiqo6baMinRuJjxmtgGKbWNZjNuzVLk9GiI",
     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpvem9tbnBwd3B3Z3RxZGd0d255Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1NTYzMDYsImV4cCI6MjA2MjEzMjMwNn0.KcX5BOG-hiqo6baMinRuJjxmtgGKbWNZjNuzVLk9GiI"
@@ -29,10 +29,14 @@ SUPABASE_HEADERS = {
 
 # Função genérica para buscar dados do Supabase com cache e paginação
 @st.cache_data(show_spinner=False)
-def fetch_supabase_data(cache, url, columns_expected, data_inicial: str, data_final: str, date_column=None):
-    key = f"{url}_{data_inicial}_{data_final}"
-    if key in cache:
-        return cache[key]
+def fetch_supabase_data(_cache, url, columns_expected, data_inicial, data_final, date_column=None):
+    # Converter para strings para garantir que sejam hasháveis
+    data_inicial_str = data_inicial.strftime("%Y-%m-%d") if hasattr(data_inicial, 'strftime') else str(data_inicial)
+    data_final_str = data_final.strftime("%Y-%m-%d") if hasattr(data_final, 'strftime') else str(data_final)
+    
+    key = f"{url}_{data_inicial_str}_{data_final_str}"
+    if key in _cache:
+        return _cache[key]
 
     # Converter columns_expected para tupla para garantir hasheabilidade
     columns_expected = tuple(columns_expected)
@@ -45,7 +49,7 @@ def fetch_supabase_data(cache, url, columns_expected, data_inicial: str, data_fi
     # Adicionar filtro de data na URL, se date_column for especificado
     query_url = url
     if date_column:
-        query_url += f"?{date_column}=gte.{data_inicial}&{date_column}=lte.{data_final}&select=*"
+        query_url += f"?{date_column}=gte.{data_inicial_str}&{date_column}=lte.{data_final_str}&select=*"
 
     try:
         while True:
@@ -65,24 +69,25 @@ def fetch_supabase_data(cache, url, columns_expected, data_inicial: str, data_fi
             missing_columns = [col for col in columns_expected if col not in df.columns]
             if missing_columns:
                 st.error(f"Colunas ausentes nos dados retornados pela URL {url}: {missing_columns}")
-                cache[key] = pd.DataFrame()
+                _cache[key] = pd.DataFrame()
                 return pd.DataFrame()
             # Filtrar por data no lado do cliente, como fallback
             if date_column in df.columns:
                 df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
-                df = df[(df[date_column] >= pd.to_datetime(data_inicial)) & (df[date_column] <= pd.to_datetime(data_final))]
-            cache[key] = df
+                df = df[(df[date_column] >= pd.to_datetime(data_inicial_str)) & 
+                        (df[date_column] <= pd.to_datetime(data_final_str))]
+            _cache[key] = df
         else:
             st.warning(f"Nenhum dado retornado pela URL {query_url}.")
-            cache[key] = pd.DataFrame()
+            _cache[key] = pd.DataFrame()
             df = pd.DataFrame()
 
     except (requests.exceptions.RequestException, ValueError) as e:
         st.error(f"Erro ao buscar dados da URL {query_url}: {e}")
-        cache[key] = pd.DataFrame()
+        _cache[key] = pd.DataFrame()
         df = pd.DataFrame()
 
-    return cache[key]
+    return _cache[key]
 
 # Função para buscar dados de vendas (VwSomelier)
 def fetch_vendas_data(data_inicial, data_final):
@@ -91,8 +96,8 @@ def fetch_vendas_data(data_inicial, data_final):
         cache_vendas,
         config["url"],
         config["columns"],
-        data_inicial.strftime("%Y-%m-%d"),
-        data_final.strftime("%Y-%m-%d"),
+        data_inicial,
+        data_final,
         date_column="DATA"
     )
     if not df.empty:
@@ -107,8 +112,8 @@ def fetch_estoque_data(data_inicial, data_final):
         cache_estoque,
         config["url"],
         config["columns"],
-        data_inicial.strftime("%Y-%m-%d"),
-        data_final.strftime("%Y-%m-%d")
+        data_inicial,
+        data_final
     )
     if not df.empty:
         # Converter colunas numéricas relevantes
