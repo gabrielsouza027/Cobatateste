@@ -6,8 +6,7 @@ from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 import requests
 import os
 
-# Configuração da página
-st.set_page_config(page_title="Dashboard de Vendas", layout="wide")
+
 
 # Injetar CSS para garantir que o AgGrid ocupe toda a largura
 st.markdown("""
